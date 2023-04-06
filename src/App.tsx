@@ -1,6 +1,6 @@
 import './styles/global.css'
 
-import { useForm } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
@@ -30,18 +30,37 @@ const createUserFormSchema = z.object({
       return email.endsWith('@rocketseat.com.br')
     }, 'O e-mail precisa ser da rockeseat'),
   password: z.string().min(6, 'A senha precisa de no mínimo 6 caracteres'),
+  techs: z
+    .array(
+      z.object({
+        title: z.string().nonempty('O título é obrigatório'),
+        // coerce faz mudar o tipo para number
+        knowledge: z.coerce.number().min(1).max(100),
+      }),
+    )
+    .min(2, 'Insira pelo menos 2 tecnoloas'),
 })
 
 // Tipagem
 type CreateUserFormData = z.infer<typeof createUserFormSchema>
 
 export function App() {
-  const { register, handleSubmit, formState } = useForm<CreateUserFormData>({
-    resolver: zodResolver(createUserFormSchema),
+  const { register, handleSubmit, formState, control } =
+    useForm<CreateUserFormData>({
+      resolver: zodResolver(createUserFormSchema),
+    })
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'techs',
   })
 
   function createUser(data: any) {
     console.log(data)
+  }
+
+  function handleAddNewTech() {
+    append({ title: '', knowledge: 0 })
   }
 
   return (
@@ -59,7 +78,9 @@ export function App() {
           />
 
           {formState.errors.email && (
-            <span>{formState.errors.email.message}</span>
+            <span className="text-red-500 text-sm">
+              {formState.errors.email.message}
+            </span>
           )}
         </div>
 
@@ -72,7 +93,9 @@ export function App() {
           />
 
           {formState.errors.email && (
-            <span>{formState.errors.email.message}</span>
+            <span className="text-red-500 text-sm">
+              {formState.errors.email.message}
+            </span>
           )}
         </div>
 
@@ -85,7 +108,63 @@ export function App() {
           />
 
           {formState.errors.password && (
-            <span>{formState.errors.password.message}</span>
+            <span className="text-red-500 text-sm">
+              {formState.errors.password.message}
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="" className="flex items-center justify-between">
+            Tecnologias
+            <button
+              type="button"
+              onClick={handleAddNewTech}
+              className="text-emerald-500 text-xs"
+            >
+              Adicionar
+            </button>
+          </label>
+
+          {fields.map((field, index) => {
+            // O id é gerado pelo react hook form
+            return (
+              <div key={field.id} className="flex gap-2">
+                <div className="flex-1 flex flex-col gap-1">
+                  <input
+                    type="text"
+                    className="border border-zinc-800 shadow-sm rounded h-10 px-3 bg-zinc-900"
+                    {...register(`techs.${index}.title`)}
+                  />
+
+                  {formState.errors.techs?.[index]?.title && (
+                    <span className="text-red-500 text-sm">
+                      {formState.errors.techs?.[index]?.title?.message}
+                    </span>
+                  )}
+                </div>
+
+                <div className="w-16 flex flex-col gap-1">
+                  <input
+                    type="number"
+                    className="border border-zinc-800 shadow-sm rounded h-10 px-3 bg-zinc-900"
+                    {...register(`techs.${index}.knowledge`)}
+                  />
+                </div>
+
+                {formState.errors.techs?.[index]?.knowledge && (
+                  <span className="text-red-500 text-sm">
+                    {formState.errors.techs?.[index]?.knowledge?.message}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+
+          {formState.errors.techs && (
+            <span className="text-red-500 text-sm">
+              {formState.errors.techs.message}
+            </span>
           )}
         </div>
 
