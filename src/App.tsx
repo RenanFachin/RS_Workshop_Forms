@@ -3,8 +3,16 @@ import './styles/global.css'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { supabase } from './lib/supabase'
 
 const createUserFormSchema = z.object({
+  avatar: z
+    .instanceof(FileList)
+    .transform((list) => list.item(0)!)
+    .refine(
+      (file) => file!.size <= 5 * 1024 * 1024,
+      'O arquivo precisa ter no máximo 5MB',
+    ),
   name: z
     .string()
     .nonempty('O nome é obrigatório')
@@ -38,7 +46,10 @@ const createUserFormSchema = z.object({
         knowledge: z.coerce.number().min(1).max(100),
       }),
     )
-    .min(2, 'Insira pelo menos 2 tecnoloas'),
+    .min(2, 'Insira pelo menos 2 tecnoloas')
+    .refine((techs) => {
+      return techs.some((tech) => tech.knowledge > 50)
+    }, 'Pelo menos uma habilidade sua deve ser maior quie 50'),
 })
 
 // Tipagem
@@ -55,7 +66,10 @@ export function App() {
     name: 'techs',
   })
 
-  function createUser(data: any) {
+  async function createUser(data: CreateUserFormData) {
+    await supabase.storage
+      .from('forms-react')
+      .upload(data.avatar.name, data.avatar)
     console.log(data)
   }
 
@@ -69,6 +83,17 @@ export function App() {
         onSubmit={handleSubmit(createUser)}
         className="flex flex-col gap-4 w-full max-w-xs"
       >
+        <div className="flex flex-col gap-1">
+          <label htmlFor="name">Avatar</label>
+          <input type="file" accept="image/*" {...register('avatar')} />
+
+          {formState.errors.avatar && (
+            <span className="text-red-500 text-sm">
+              {formState.errors.avatar.message}
+            </span>
+          )}
+        </div>
+
         <div className="flex flex-col gap-1">
           <label htmlFor="name">Nome</label>
           <input
