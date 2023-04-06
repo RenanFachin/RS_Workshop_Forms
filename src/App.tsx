@@ -13,7 +13,7 @@ const createUserFormSchema = z.object({
 })
 
 export function App() {
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, formState } = useForm({
     resolver: zodResolver(createUserFormSchema),
   })
 
@@ -34,6 +34,10 @@ export function App() {
             className="border border-zinc-800 shadow-sm rounded h-10 px-3 bg-zinc-900"
             {...register('email')}
           />
+
+          {formState.errors.email && (
+            <span>{formState.errors.email.message}</span>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -43,6 +47,10 @@ export function App() {
             className="border border-zinc-800 shadow-sm rounded h-10 px-3 bg-zinc-900"
             {...register('password')}
           />
+
+          {formState.errors.password && (
+            <span>{formState.errors.password.message}</span>
+          )}
         </div>
 
         <button
