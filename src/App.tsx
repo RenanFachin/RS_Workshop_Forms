@@ -2,7 +2,7 @@ import './styles/global.css'
 
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-
+import { zodResolver } from '@hookform/resolvers/zod'
 
 const createUserFormSchema = z.object({
   email: z
@@ -13,7 +13,9 @@ const createUserFormSchema = z.object({
 })
 
 export function App() {
-  const { register, handleSubmit } = useForm()
+  const { register, handleSubmit } = useForm({
+    resolver: zodResolver(createUserFormSchema),
+  })
 
   function createUser(data: any) {
     console.log(data)
